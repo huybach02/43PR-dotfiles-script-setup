@@ -308,13 +308,12 @@ function M.sync()
             if matched_tb then
                 -- Đảm bảo cả hai cửa sổ đều floating
                 if not matched_tb.floating then
-                    hl.dispatch(hl.dsp.exec_raw("setfloating address:" .. matched_tb.address))
+                    hl.dispatch(hl.dsp.window.float({ state = true, window = matched_tb }))
                 end
 
-                -- Đồng bộ Workspace nếu lệch nhau
+                -- Đồng bộ Workspace nếu lệch nhau (khi kéo máy ảo sang workspace/màn hình khác)
                 if matched_tb.workspace and emu.workspace and matched_tb.workspace.id ~= emu.workspace.id then
-                    local ws_name = tostring(emu.workspace.name or emu.workspace.id)
-                    hl.dispatch(hl.dsp.exec_raw("movetoworkspacesilent " .. ws_name .. ",address:" .. matched_tb.address))
+                    hl.dispatch(hl.dsp.window.move({ workspace = emu.workspace.id, silent = true, window = matched_tb }))
                 end
 
                 -- Tính tọa độ bám sát cạnh phải của máy ảo
@@ -326,7 +325,7 @@ function M.sync()
 
                 -- Di chuyển nếu lệch quá 2px
                 if math.abs(curr_x - target_x) > 2 or math.abs(curr_y - target_y) > 2 then
-                    hl.dispatch(hl.dsp.exec_raw("movewindowpixel exact " .. target_x .. " " .. target_y .. ",address:" .. matched_tb.address))
+                    hl.dispatch(hl.dsp.window.move({ x = target_x, y = target_y, window = matched_tb }))
                 end
             end
         end
