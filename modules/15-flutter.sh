@@ -233,8 +233,11 @@ EOF
     cat << 'EOF' > "$DOT_HYPR/emulator-sync.lua"
 -- ~/.config/hypr/emulator-sync.lua
 -- Tự động đồng bộ thanh công cụ (Toolbar) luôn bám sát cạnh phải máy ảo Android
+-- Hỗ trợ bật / ẩn Toolbar linh hoạt theo ý muốn (phím tắt Super + Alt + T hoặc Super + F12)
 
-local M = {}
+local M = {
+    toolbar_visible = true,
+}
 
 -- Hàm kiểm tra xem cửa sổ có thuộc về máy ảo Android không
 local function is_emulator_window(w)
@@ -259,6 +262,50 @@ local function is_emulator_window(w)
     return false
 end
 
+-- Hàm bật / tắt ẩn hiện Toolbar
+function M.toggle_toolbar()
+    M.toolbar_visible = not M.toolbar_visible
+
+    local wins = hl.get_windows()
+    if not M.toolbar_visible then
+        -- Ẩn toolbar ra ngoài màn hình
+        for _, w in ipairs(wins) do
+            if is_emulator_window(w) and (w.size and w.size.x < 120 and w.size.x > 0) then
+                hl.dispatch(hl.dsp.window.move({ x = -9999, y = -9999, window = w }))
+            end
+        end
+        os.execute("notify-send -u low -t 1500 'Android Emulator' 'Toolbar: ĐÃ ẨN (Bấm Super + Alt + T để hiện lại)'")
+    else
+        -- Hiện lại toolbar và gắn vào cạnh phải máy ảo
+        local emu = nil
+        local tb = nil
+        for _, w in ipairs(wins) do
+            if is_emulator_window(w) then
+                local w_width = (w.size and w.size.x) or 0
+                if w_width >= 150 then
+                    emu = w
+                elseif w_width > 0 and w_width < 120 then
+                    tb = w
+                end
+            end
+        end
+
+        if emu and tb then
+            if tb.workspace and emu.workspace and tb.workspace.id ~= emu.workspace.id then
+                hl.dispatch(hl.dsp.window.move({ workspace = emu.workspace.id, silent = true, window = tb }))
+            end
+            local target_x = (emu.at.x or 0) + (emu.size.x or 0)
+            local target_y = (emu.at.y or 0)
+            hl.dispatch(hl.dsp.window.move({ x = target_x, y = target_y, window = tb }))
+            hl.dispatch(hl.dsp.window.bring_to_top({ window = tb }))
+        end
+        os.execute("notify-send -u low -t 1500 'Android Emulator' 'Toolbar: ĐANG HIỆN'")
+    end
+end
+
+-- Đưa vào global table để có thể gọi từ hyprctl eval hoặc keybinds
+_G.toggle_emulator_toolbar = M.toggle_toolbar
+
 function M.sync()
     local ok, err = pcall(function()
         local wins = hl.get_windows()
@@ -281,6 +328,17 @@ function M.sync()
 
         -- Nếu không có máy ảo hoặc không có toolbar nào, kết thúc nhanh
         if #emulators == 0 or #toolbars == 0 then
+            return
+        end
+
+        -- Xử lý khi người dùng chọn ẨN toolbar:
+        if not M.toolbar_visible then
+            for _, tb in ipairs(toolbars) do
+                -- Nếu toolbar xuất hiện trong màn hình, lập tức đẩy ra ngoài
+                if (tb.at.x or 0) > -5000 then
+                    hl.dispatch(hl.dsp.window.move({ x = -9999, y = -9999, window = tb }))
+                end
+            end
             return
         end
 
@@ -352,6 +410,38 @@ EOF
             substep "require(\"emulator-sync\") đã có sẵn trong hyprland.lua"
         fi
     fi
+
+    # Thêm phím tắt Super + Alt + T / Super + F12 vào keybinds.lua
+    local KEYBINDS_LUA="$DOT_HYPR/keybinds.lua"
+    if [[ -f "$KEYBINDS_LUA" ]] && ! grep -q "toggle_emulator_toolbar" "$KEYBINDS_LUA"; then
+        cat << 'EOF' >> "$KEYBINDS_LUA"
+
+-- Bật / Ẩn thanh công cụ (Toolbar) của Android Emulator (Super + Alt + T hoặc Super + F12)
+hl.bind(mainMod .. " + ALT + T", function()
+    if _G.toggle_emulator_toolbar then
+        _G.toggle_emulator_toolbar()
+    end
+end)
+hl.bind(mainMod .. " + F12", function()
+    if _G.toggle_emulator_toolbar then
+        _G.toggle_emulator_toolbar()
+    end
+end)
+EOF
+        substep "Đã thêm phím tắt Super + Alt + T và Super + F12 vào keybinds.lua"
+    fi
+
+    # Tạo script tiện ích toggle-emulator-toolbar
+    local TOGGLE_SCRIPT="$DOT_HYPR/scripts/toggle-emulator-toolbar.sh"
+    mkdir -p "$DOT_HYPR/scripts"
+    cat << 'EOF' > "$TOGGLE_SCRIPT"
+#!/usr/bin/env bash
+# Script bật / ẩn Toolbar của Android Emulator
+hyprctl eval 'if _G.toggle_emulator_toolbar then _G.toggle_emulator_toolbar() end'
+EOF
+    chmod +x "$TOGGLE_SCRIPT"
+    sudo ln -sf "$TOGGLE_SCRIPT" /usr/local/bin/toggle-emulator-toolbar 2>/dev/null || true
+    substep "Đã tạo lệnh toggle-emulator-toolbar"
 
     # Reload cấu hình Hyprland
     if command -v hyprctl &>/dev/null; then
