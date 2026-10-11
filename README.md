@@ -13,7 +13,7 @@ Bộ script thiết lập máy tự động dạng mô-đun hóa (modular), đư
 ├── lib/
 │   └── common.sh            # Thư viện dùng chung (màu sắc, cơ chế sudo 1 lần duy nhất, pacman, paru/yay)
 └── modules/
-    ├── 01-system.sh         # Module 1: Cập nhật hệ thống, base-devel, cấu hình paru
+    ├── 01-system.sh         # Module 1: Cập nhật hệ thống, base-devel, cấu hình paru, tắt tự động Btrfs snapshot (snap-pac)
     ├── 02-dotfiles.sh       # Module 2: Cài đặt Hyprland + bộ dotfiles 43PR
     ├── 03-apps.sh           # Module 3: Cài đặt Edge, VS Code, LibreOffice, Sublime Text, AppImageLauncher
     ├── 04-defaults.sh       # Module 4: Đặt Edge làm trình duyệt mặc định, Sublime Text làm editor mặc định
@@ -28,7 +28,7 @@ Bộ script thiết lập máy tự động dạng mô-đun hóa (modular), đư
     ├── 13-quickshell-tweaks.sh    # Module 13: Tắt trong suốt, tắt rung lắc góc, click CPU/RAM mở btop, Volume OSD & ngày giờ Bar
     ├── 14-warp.sh                 # Module 14: Cài đặt Cloudflare WARP (warp-cli) và nút bật/tắt nhanh trên thanh Bar
     ├── 15-flutter.sh              # Module 15: [Opt-in] Cài đặt môi trường Flutter, Android SDK (dùng VS Code) & tự động bám Toolbar máy ảo
-    └── 16-clean.sh                # Module 16: [Opt-in] Dọn dẹp cache Paru/Pacman, gỡ gói mồ côi & tối ưu dung lượng ổ đĩa
+    └── 16-clean.sh                # Module 16: [Opt-in] Dọn dẹp Btrfs snapshots, snap-pac, cache Paru/Pacman, trình duyệt, thùng rác & tối ưu dung lượng
 ```
 
 ---
@@ -63,7 +63,7 @@ Bạn có thể truyền tên module (rút gọn hoặc đầy đủ) vào dòng
   # hoặc: ./setup.sh 15-flutter
   ```
 
-- **Dọn dẹp hệ thống, cache Paru/Pacman & gói rác (Chạy riêng):**
+- **Dọn dẹp hệ thống, Btrfs snapshots, cache Paru/Pacman & thùng rác (Chạy riêng):**
   ```bash
   ./setup.sh clean
   # hoặc chạy trực tiếp: ~/setup/clean.sh
