@@ -128,6 +128,22 @@ run_module() {
                 substep "Máy ảo $DEFAULT_AVD_NAME đã tồn tại."
             fi
         fi
+
+        # Tạo wrapper cho emulator để fix lỗi Qt Wayland (code -6 crash trên Wayland/Hyprland)
+        local EMU_BIN="$ANDROID_SDK_DIR/emulator/emulator"
+        local EMU_ORIG="$ANDROID_SDK_DIR/emulator/emulator-original"
+        if [[ -f "$EMU_BIN" && ! -f "$EMU_ORIG" ]]; then
+            mv "$EMU_BIN" "$EMU_ORIG"
+            cat << 'EOF' > "$EMU_BIN"
+#!/usr/bin/env bash
+# Force XCB for Android Emulator on Wayland
+export QT_QPA_PLATFORM=xcb
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec -a "$0" "$DIR/emulator-original" "$@"
+EOF
+            chmod +x "$EMU_BIN"
+            substep "Đã tạo wrapper tương thích Wayland cho Android Emulator"
+        fi
     fi
 
     # 4. THIẾT LẬP BIẾN MÔI TRƯỜNG HỆ THỐNG VÀ USER SHELL
