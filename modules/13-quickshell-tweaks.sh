@@ -161,6 +161,33 @@ EOF
         fi
     fi
 
+    # Sửa lỗi popup notification không tự đóng (expireTimeout nhân 1000)
+    local NOTIF_FILE="$QS_DIR/Notifications.qml"
+    if [[ -f "$NOTIF_FILE" ]]; then
+        if grep -q 'expireTimeout \* 1000' "$NOTIF_FILE"; then
+            python3 -c '
+path = "'"$NOTIF_FILE"'"
+with open(path, "r") as f:
+    content = f.read()
+old = "interval: wrapper.modelData.expireTimeout > 0 ? wrapper.modelData.expireTimeout * 1000 : 6000"
+new = """interval: {
+                        const to = wrapper.modelData.expireTimeout;
+                        if (to > 0) {
+                            return to <= 60 ? to * 1000 : to;
+                        }
+                        return 5000;
+                    }"""
+if old in content:
+    content = content.replace(old, new)
+    with open(path, "w") as f:
+        f.write(content)
+'
+            substep "Đã sửa lỗi tính toán thời gian auto-close trong Notifications.qml"
+        else
+            substep "Thời gian auto-close trong Notifications.qml đã chuẩn"
+        fi
+    fi
+
     # 4. CẤU HÌNH CLICK CPU/RAM TRÊN BAR MỞ POPUP BTOP NỔI
     info "4/5. Cấu hình popup btop nổi khi click CPU/RAM trên Bar..."
     pkg_install btop
