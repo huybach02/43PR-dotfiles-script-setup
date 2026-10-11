@@ -326,15 +326,23 @@ function M.sync()
             end
         end
 
-        -- Nếu không có máy ảo hoặc không có toolbar nào, kết thúc nhanh
-        if #emulators == 0 or #toolbars == 0 then
+        -- 1. LUÔN LUÔN CỨU MÁY ẢO CHÍNH NẾU BỊ TRÔI TỌA ĐỘ ÂM
+        for _, emu in ipairs(emulators) do
+            if (emu.at.x or 0) < 0 or (emu.at.x or 0) > 3840 then
+                hl.dispatch(hl.dsp.window.move({ x = 760, y = 120, window = emu }))
+                hl.dispatch(hl.dsp.window.bring_to_top({ window = emu }))
+            end
+        end
+
+        -- Nếu không có toolbar nào, dừng ở đây
+        if #toolbars == 0 or #emulators == 0 then
             return
         end
 
-        -- Xử lý khi người dùng chọn ẨN toolbar:
+        -- 2. XỬ LÝ THANH TOOLBAR:
         if not M.toolbar_visible then
+            -- Nếu người dùng đã chọn ẨN toolbar:
             for _, tb in ipairs(toolbars) do
-                -- Nếu toolbar xuất hiện trong màn hình, lập tức đẩy ra ngoài
                 if (tb.at.x or 0) > -5000 then
                     hl.dispatch(hl.dsp.window.move({ x = -9999, y = -9999, window = tb }))
                 end
@@ -342,14 +350,8 @@ function M.sync()
             return
         end
 
-        -- Ghép cặp toolbar với emulator (ưu tiên cùng PID)
+        -- 3. NẾU TOOLBAR ĐANG HIỆN: Ghép cặp và bám sát cạnh phải máy ảo
         for _, emu in ipairs(emulators) do
-            -- Nếu cửa sổ máy ảo bị trôi ra ngoài vùng hiển thị (tọa độ âm hoặc quá giới hạn), tự động kéo về giữa
-            if (emu.at.x or 0) < 0 or (emu.at.x or 0) > 3840 then
-                hl.dispatch(hl.dsp.focus({ window = emu }))
-                hl.dispatch(hl.dsp.window.center())
-            end
-
             local matched_tb = nil
             for _, tb in ipairs(toolbars) do
                 if tb.pid == emu.pid then
