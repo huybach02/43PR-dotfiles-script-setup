@@ -161,30 +161,111 @@ EOF
         fi
     fi
 
-    # Sửa lỗi popup notification không tự đóng (expireTimeout nhân 1000)
+    # Sửa lỗi popup notification: tự đóng sau 3s và bổ sung thanh progress đếm ngược
     local NOTIF_FILE="$QS_DIR/Notifications.qml"
     if [[ -f "$NOTIF_FILE" ]]; then
-        if grep -q 'expireTimeout \* 1000' "$NOTIF_FILE"; then
+        if ! grep -q 'progTrack' "$NOTIF_FILE" || grep -q 'return 5000;' "$NOTIF_FILE" || grep -q 'expireTimeout \* 1000' "$NOTIF_FILE"; then
             python3 -c '
 path = "'"$NOTIF_FILE"'"
 with open(path, "r") as f:
     content = f.read()
-old = "interval: wrapper.modelData.expireTimeout > 0 ? wrapper.modelData.expireTimeout * 1000 : 6000"
-new = """interval: {
+
+old_timer = """Timer {
+                    interval: wrapper.modelData.expireTimeout > 0 ? wrapper.modelData.expireTimeout * 1000 : 6000
+                    running: !wrapper.critical && !hover.containsMouse && !wrapper.leaving
+                    onTriggered: wrapper.close(true)
+                }"""
+old_timer2 = """Timer {
+                    interval: {
                         const to = wrapper.modelData.expireTimeout;
                         if (to > 0) {
                             return to <= 60 ? to * 1000 : to;
                         }
                         return 5000;
-                    }"""
-if old in content:
-    content = content.replace(old, new)
-    with open(path, "w") as f:
-        f.write(content)
+                    }
+                    running: !wrapper.critical && !hover.containsMouse && !wrapper.leaving
+                    onTriggered: wrapper.close(true)
+                }"""
+
+new_timer = """Timer {
+                    id: autoCloseTimer
+                    interval: wrapper.timeoutMs
+                    running: !wrapper.critical && !hover.containsMouse && !wrapper.leaving
+                    onTriggered: wrapper.close(true)
+                }
+
+                NumberAnimation {
+                    id: progAnim
+                    target: wrapper
+                    property: "progress"
+                    from: 1.0
+                    to: 0.0
+                    duration: wrapper.timeoutMs
+                    running: !wrapper.critical && !hover.containsMouse && !wrapper.leaving
+                }"""
+
+if "timeoutMs:" not in content and "readonly property bool critical: modelData.urgency === NotificationUrgency.Critical" in content:
+    content = content.replace(
+        "readonly property bool critical: modelData.urgency === NotificationUrgency.Critical",
+        """readonly property bool critical: modelData.urgency === NotificationUrgency.Critical
+                readonly property int timeoutMs: {
+                    const to = wrapper.modelData.expireTimeout;
+                    if (to > 0) {
+                        return to <= 60 ? to * 1000 : to;
+                    }
+                    return 3000;
+                }
+                property real progress: 1.0"""
+    )
+
+if old_timer in content:
+    content = content.replace(old_timer, new_timer)
+elif old_timer2 in content:
+    content = content.replace(old_timer2, new_timer)
+
+if "return 5000;" in content:
+    content = content.replace("return 5000;", "return 3000;")
+
+if "progTrack" not in content:
+    prog_block = """                    // Thanh process đếm ngược thời gian tự đóng
+                    Rectangle {
+                        id: progTrack
+                        visible: !wrapper.critical
+                        anchors {
+                            bottom: parent.bottom
+                            bottomMargin: root.px(5)
+                            left: parent.left
+                            leftMargin: root.px(14)
+                            right: parent.right
+                            rightMargin: root.px(14)
+                        }
+                        height: root.px(3)
+                        radius: root.px(1.5)
+                        color: Theme.alpha(Theme.text, 0.08)
+
+                        Rectangle {
+                            id: progFill
+                            anchors {
+                                left: parent.left
+                                top: parent.top
+                                bottom: parent.bottom
+                            }
+                            radius: parent.radius
+                            width: Math.round(parent.width * Math.max(0.0, Math.min(1.0, wrapper.progress)))
+                            color: hover.containsMouse ? Theme.accent : Theme.alpha(Theme.accent, 0.8)
+
+                            Behavior on color { ColorAnimation { duration: Theme.animFast } }
+                        }
+                    }
+                }"""
+    content = content.replace("                }\n            }\n        }\n    }\n\n    Item {\n        id: dragHandle", prog_block + "\n            }\n        }\n    }\n\n    Item {\n        id: dragHandle")
+
+with open(path, "w") as f:
+    f.write(content)
 '
-            substep "Đã sửa lỗi tính toán thời gian auto-close trong Notifications.qml"
+            substep "Đã cấu hình thời gian tự đóng 3s và thanh process trong Notifications.qml"
         else
-            substep "Thời gian auto-close trong Notifications.qml đã chuẩn"
+            substep "Thời gian tự đóng 3s và thanh process trong Notifications.qml đã chuẩn"
         fi
     fi
 
