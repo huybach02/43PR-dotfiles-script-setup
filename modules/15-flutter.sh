@@ -214,6 +214,7 @@ hl.window_rule({
     name = "float-android-emulator",
     match = { class = "^(Emulator|qemu-system-x86_64)$" },
     float = true,
+    center = true,
 })
 
 hl.window_rule({
@@ -285,6 +286,12 @@ function M.sync()
 
         -- Ghép cặp toolbar với emulator (ưu tiên cùng PID)
         for _, emu in ipairs(emulators) do
+            -- Nếu cửa sổ máy ảo bị trôi ra ngoài vùng hiển thị (tọa độ âm hoặc quá giới hạn), tự động kéo về giữa
+            if (emu.at.x or 0) < 0 or (emu.at.x or 0) > 3840 then
+                hl.dispatch(hl.dsp.focus({ window = emu }))
+                hl.dispatch(hl.dsp.window.center())
+            end
+
             local matched_tb = nil
             for _, tb in ipairs(toolbars) do
                 if tb.pid == emu.pid then
