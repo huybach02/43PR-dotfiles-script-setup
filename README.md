@@ -23,7 +23,7 @@ Bộ script thiết lập máy tự động dạng mô-đun hóa (modular), đư
     ├── 08-dev.sh                  # Module 8: Môi trường phát triển: PHP 8.5 (+ extensions), Composer, Node.js 24 LTS, npm, Symfony CLI
     ├── 09-screenshot.sh           # Module 9: Chụp ảnh màn hình (Super + Shift + S), popup QuickShell OSD, trình sửa ảnh Satty
     ├── 10-terminal-image-paste.sh # Module 10: Tự động đính kèm ảnh từ clipboard vào terminal AI agent (agy, claude) khi bấm Ctrl + Shift + V
-    ├── 11-mount-data.sh           # Module 11: Tự động mount phân vùng Data (NTFS) vào /mnt/Data, tạo symlink ~/Data và /run/media/...
+    ├── 11-mount-data.sh           # Module 11: Tự động mount phân vùng Data (NTFS) vào /mnt/Data, cấu hình hiển thị Thunar/VSCode, bookmark GTK, tạo symlink ~/Data, /DATA và /run/media/...
     ├── 12-clipboard-preview.sh    # Module 12: Lịch sử clipboard Super + V QuickShell chia 6/4 (thumbnail mini, preview ảnh to bên phải, cuộn chuẩn)
     ├── 13-quickshell-tweaks.sh    # Module 13: Tắt trong suốt, tắt rung lắc góc, click CPU/RAM mở btop, Volume OSD & ngày giờ Bar
     ├── 14-warp.sh                 # Module 14: Cài đặt Cloudflare WARP (warp-cli) và nút bật/tắt nhanh trên thanh Bar
