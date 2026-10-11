@@ -90,7 +90,7 @@ run_module() {
         info "Tự động chấp nhận giấy phép SDK licenses..."
         yes 2>/dev/null | "$SDKMANAGER" --sdk_root="$ANDROID_SDK_DIR" --licenses >/dev/null 2>&1 || true
 
-        info "Cài đặt các gói thành phần cốt lõi: platform-tools, platforms;android-36/34, build-tools;36/34/28, emulator..."
+        info "Cài đặt các gói thành phần cốt lõi: platform-tools, platforms;android-36/34, build-tools;36/34/28, emulator, system-images..."
         "$SDKMANAGER" --sdk_root="$ANDROID_SDK_DIR" \
             "platform-tools" \
             "platforms;android-36" \
@@ -98,8 +98,36 @@ run_module() {
             "build-tools;36.0.0" \
             "build-tools;34.0.0" \
             "build-tools;28.0.3" \
-            "emulator" || true
+            "emulator" \
+            "system-images;android-34;google_apis;x86_64" || true
         substep "Hoàn tất cài đặt các thành phần Android SDK"
+
+        # Tạo máy ảo Android AVD mặc định nếu chưa tồn tại
+        local AVDMANAGER="$CMDLINE_DIR/bin/avdmanager"
+        local DEFAULT_AVD_NAME="Pixel_API_34"
+        if [[ -x "$AVDMANAGER" ]]; then
+            info "Kiểm tra danh sách máy ảo Android (AVD)..."
+            if ! "$AVDMANAGER" list avd 2>/dev/null | grep -q "Name: $DEFAULT_AVD_NAME"; then
+                info "Đang tạo máy ảo mặc định '$DEFAULT_AVD_NAME'..."
+                echo "no" | "$AVDMANAGER" create avd \
+                    --name "$DEFAULT_AVD_NAME" \
+                    --package "system-images;android-34;google_apis;x86_64" \
+                    --device "pixel_7" \
+                    --force || true
+
+                # Tối ưu cấu hình máy ảo (bật hardware keyboard, GPU host/auto, tăng RAM & core)
+                local AVD_CONFIG="$HOME/.android/avd/${DEFAULT_AVD_NAME}.avd/config.ini"
+                if [[ -f "$AVD_CONFIG" ]]; then
+                    sed -i 's/^hw.gpu.enabled=no/hw.gpu.enabled=yes/' "$AVD_CONFIG"
+                    sed -i 's/^hw.keyboard=no/hw.keyboard=yes/' "$AVD_CONFIG"
+                    sed -i 's/^hw.ramSize=1536M/hw.ramSize=2048M/' "$AVD_CONFIG"
+                    sed -i 's/^hw.cpu.ncore=2/hw.cpu.ncore=4/' "$AVD_CONFIG"
+                fi
+                substep "Đã tạo và tối ưu máy ảo: $DEFAULT_AVD_NAME"
+            else
+                substep "Máy ảo $DEFAULT_AVD_NAME đã tồn tại."
+            fi
+        fi
     fi
 
     # 4. THIẾT LẬP BIẾN MÔI TRƯỜNG HỆ THỐNG VÀ USER SHELL
