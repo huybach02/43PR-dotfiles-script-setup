@@ -4,13 +4,13 @@
 # Description: Tinh chỉnh giao diện và tương tác QuickShell:
 #              1. Tắt hoàn toàn hiệu ứng trong suốt (nền đặc opaque 100%).
 #              2. Tắt hiệu ứng lắc/nghiêng 3D khi hover chuột vào các góc (tiltStrength: 0).
-#              3. Cơ chế đóng nhanh các popup QuickShell (Clipboard, Settings, Todo...).
+#              3. Cơ chế đóng nhanh các popup QuickShell & cố định popup Notifications vào màn hình Philips.
 #              4. Click CPU/RAM trên Bar mở popup btop nổi (floating, centered).
 #              5. Popup Volume OSD nổi khi chỉnh âm lượng & định dạng ngày giờ trên Bar (HH:mm | dd-MM-yyyy).
 # ==============================================================================
 
 MODULE_NAME="quickshell-tweaks"
-MODULE_DESC="Tắt trong suốt, rung lắc góc, click CPU/RAM mở btop, Volume OSD & ngày giờ Bar"
+MODULE_DESC="Tắt trong suốt, rung lắc góc, click CPU/RAM mở btop, Volume OSD, ngày giờ Bar & popup Notifications màn hình Philips"
 
 run_module() {
     header "MODULE: $MODULE_DESC"
@@ -161,15 +161,38 @@ EOF
         fi
     fi
 
-    # Sửa lỗi popup notification: tự đóng sau 3s và bổ sung thanh progress đếm ngược
+    # Sửa lỗi popup notification: cố định hiển thị ở màn hình Philips bên trái (HDMI-A-2), tự đóng sau 3s và bổ sung thanh progress đếm ngược
     local NOTIF_FILE="$QS_DIR/Notifications.qml"
     if [[ -f "$NOTIF_FILE" ]]; then
-        if ! grep -q 'progTrack' "$NOTIF_FILE" || grep -q 'return 5000;' "$NOTIF_FILE" || grep -q 'expireTimeout \* 1000' "$NOTIF_FILE"; then
+        if ! grep -q 'progTrack' "$NOTIF_FILE" || grep -q 'return 5000;' "$NOTIF_FILE" || grep -q 'expireTimeout \* 1000' "$NOTIF_FILE" || ! grep -q 'findTargetScreen' "$NOTIF_FILE"; then
             python3 -c '
 path = "'"$NOTIF_FILE"'"
 with open(path, "r") as f:
     content = f.read()
 
+# 1. Cố định vị trí popup hiển thị trên màn hình Philips bên trái (HDMI-A-2)
+if "findTargetScreen" not in content and "PanelWindow {" in content:
+    screen_patch = """PanelWindow {
+    id: root
+
+    function findTargetScreen() {
+        const screens = Quickshell.screens;
+        if (!screens || screens.length === 0) return null;
+        const target = screens.find(s => s.name === "HDMI-A-2" || (s.model && (s.model.includes("241V8") || s.model.toLowerCase().includes("philips"))));
+        return target || screens[0];
+    }
+
+    screen: root.findTargetScreen()
+
+    Connections {
+        target: Quickshell
+        function onScreensChanged() {
+            root.screen = root.findTargetScreen();
+        }
+    }"""
+    content = content.replace("PanelWindow {\n    id: root", screen_patch)
+
+# 2. Cấu hình thời gian tự đóng và thanh progress đếm ngược
 old_timer = """Timer {
                     interval: wrapper.modelData.expireTimeout > 0 ? wrapper.modelData.expireTimeout * 1000 : 6000
                     running: !wrapper.critical && !hover.containsMouse && !wrapper.leaving
@@ -263,9 +286,9 @@ if "progTrack" not in content:
 with open(path, "w") as f:
     f.write(content)
 '
-            substep "Đã cấu hình thời gian tự đóng 3s và thanh process trong Notifications.qml"
+            substep "Đã cấu hình cố định màn hình Philips, thời gian tự đóng 3s và thanh process trong Notifications.qml"
         else
-            substep "Thời gian tự đóng 3s và thanh process trong Notifications.qml đã chuẩn"
+            substep "Cấu hình cố định màn hình Philips, thời gian tự đóng 3s và thanh process trong Notifications.qml đã chuẩn"
         fi
     fi
 

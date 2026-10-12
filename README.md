@@ -25,7 +25,7 @@ Bộ script thiết lập máy tự động dạng mô-đun hóa (modular), đư
     ├── 10-terminal-image-paste.sh # Module 10: Tự động đính kèm ảnh từ clipboard vào terminal AI agent (agy, claude) khi bấm Ctrl + Shift + V
     ├── 11-mount-data.sh           # Module 11: Tự động mount phân vùng Data (NTFS) vào /mnt/Data, cấu hình hiển thị Thunar/VSCode, bookmark GTK, tạo symlink ~/Data, /DATA và /run/media/...
     ├── 12-clipboard-preview.sh    # Module 12: Lịch sử clipboard Super + V QuickShell chia 6/4 (thumbnail mini, preview ảnh to bên phải, cuộn chuẩn)
-    ├── 13-quickshell-tweaks.sh    # Module 13: Tắt trong suốt, tắt rung lắc góc, click CPU/RAM mở btop, Volume OSD & ngày giờ Bar
+    ├── 13-quickshell-tweaks.sh    # Module 13: Tắt trong suốt, tắt rung lắc góc, click CPU/RAM mở btop, Volume OSD, ngày giờ Bar & cố định popup Notifications vào màn hình Philips
     ├── 14-warp.sh                 # Module 14: Cài đặt Cloudflare WARP (warp-cli) và nút bật/tắt nhanh trên thanh Bar
     ├── 15-flutter.sh              # Module 15: [Opt-in] Cài đặt môi trường Flutter, Android SDK (dùng VS Code) & tự động bám Toolbar máy ảo
     └── 16-clean.sh                # Module 16: [Opt-in] Dọn dẹp Btrfs snapshots, snap-pac, cache Paru/Pacman, trình duyệt, thùng rác & tối ưu dung lượng
