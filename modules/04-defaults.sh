@@ -5,7 +5,7 @@
 # ==============================================================================
 
 MODULE_NAME="defaults"
-MODULE_DESC="Thiết lập ứng dụng mặc định (Edge là trình duyệt, Sublime Text là editor)"
+MODULE_DESC="Thiết lập ứng dụng mặc định (Edge duyệt web, Sublime Text editor, qimgv xem ảnh)"
 
 run_module() {
     header "MODULE: $MODULE_DESC"
@@ -95,4 +95,34 @@ run_module() {
     fi
 
     success "Sublime Text đã được đặt làm trình soạn thảo (editor) mặc định!"
+
+    # --------------------------------------------------------------------------
+    # 3. THIẾT LẬP QIMGV LÀM TRÌNH XEM ẢNH MẶC ĐỊNH
+    # --------------------------------------------------------------------------
+    info "Đang thiết lập qimgv làm trình xem ảnh mặc định..."
+
+    local IMAGE_DESKTOP="qimgv.desktop"
+
+    if command -v xdg-mime >/dev/null 2>&1; then
+        local IMAGE_MIMES=(
+            "image/jpeg"
+            "image/png"
+            "image/gif"
+            "image/webp"
+            "image/bmp"
+            "image/tiff"
+            "image/svg+xml"
+            "image/avif"
+            "image/heif"
+            "image/heic"
+            "image/x-icon"
+            "image/vnd.microsoft.icon"
+        )
+        for mime in "${IMAGE_MIMES[@]}"; do
+            xdg-mime default "$IMAGE_DESKTOP" "$mime" 2>/dev/null || true
+        done
+        substep "xdg-mime: Đã liên kết tất cả định dạng ảnh sang qimgv"
+    fi
+
+    success "qimgv đã được đặt làm trình xem ảnh mặc định!"
 }

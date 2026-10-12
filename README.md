@@ -15,8 +15,8 @@ Bộ script thiết lập máy tự động dạng mô-đun hóa (modular), đư
 └── modules/
     ├── 01-system.sh         # Module 1: Cập nhật hệ thống, base-devel, cấu hình paru, tắt tự động Btrfs snapshot (snap-pac)
     ├── 02-dotfiles.sh       # Module 2: Cài đặt Hyprland + bộ dotfiles 43PR
-    ├── 03-apps.sh           # Module 3: Cài đặt Edge, VS Code, LibreOffice, Sublime Text, AppImageLauncher
-    ├── 04-defaults.sh       # Module 4: Đặt Edge làm trình duyệt mặc định, Sublime Text làm editor mặc định
+    ├── 03-apps.sh           # Module 3: Cài đặt Edge, VS Code, LibreOffice, Sublime Text, AppImageLauncher, qimgv
+    ├── 04-defaults.sh       # Module 4: Đặt Edge làm trình duyệt mặc định, Sublime Text làm editor mặc định, qimgv làm trình xem ảnh mặc định
     ├── 05-monitors.sh       # Module 5: Thiết lập màn hình kép (Philips chính 0x0@75Hz bên trái, AOC phụ 1920x0@75Hz bên phải)
     ├── 06-workspaces-autostart.sh # Module 6: Cố định ứng dụng vào Workspace (Edge->1, Firefox->2, VSCode->3) & Autostart
     ├── 07-skey.sh                 # Module 7: Cài đặt bộ gõ tiếng Việt skey (fcitx5-skey), phím tắt Alt + Left Shift
