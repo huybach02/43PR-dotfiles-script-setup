@@ -96,7 +96,6 @@ EnumerateSkipFirst=False
 [Hotkey/TriggerKeys]
 0=Alt+Shift_L
 1=Shift+Alt_L
-2=Control+space
 
 [Hotkey/EnumerateForwardKeys]
 0=Alt+Shift_L
